@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink: #08080a;
+  --color-panel: #131317;
+  --color-panel-2: #1a1a20;
+  --color-edge: #26262f;
+  --color-muted: #8b8b99;
+  --color-spotify: #1db954;
+  --color-yandex: #ffcc00;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(80rem 40rem at 15% -10%, rgba(29, 185, 84, 0.09), transparent 60%),
+    radial-gradient(60rem 35rem at 95% 0%, rgba(255, 204, 0, 0.06), transparent 55%),
+    var(--color-ink);
+  color: #eceef2;
+  min-height: 100dvh;
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Тонкий скроллбар в журнале переноса, чтобы не спорил с тёмной темой. */
+.thin-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-edge);
+  border-radius: 999px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
