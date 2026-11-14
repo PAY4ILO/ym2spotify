@@ -240,20 +240,23 @@ export class SpotifyClient {
 
   async getPlaylists(): Promise<SpotifyPlaylistMeta[]> {
     const out: SpotifyPlaylistMeta[] = [];
-    for await (const item of this.paginate<{ id: string; name: string; tracks?: { total?: number } }>(
-      '/me/playlists',
-      50,
-    )) {
-      out.push({ id: item.id, name: item.name, trackCount: item.tracks?.total ?? 0 });
+    for await (const item of this.paginate<{
+      id: string;
+      name: string;
+      tracks?: { total?: number };
+      items?: { total?: number };
+    }>('/me/playlists', 50)) {
+      out.push({ id: item.id, name: item.name, trackCount: item.items?.total ?? item.tracks?.total ?? 0 });
     }
     return out;
   }
 
   async getPlaylistItems(playlistId: string): Promise<TrackRef[]> {
     const out: TrackRef[] = [];
-    for await (const item of this.paginate<{ track?: RawTrack | null }>(`/playlists/${playlistId}/items`, 100)) {
+    for await (const entry of this.paginate<{ track?: RawTrack | null; item?: RawTrack | null }>(`/playlists/${playlistId}/items`, 100)) {
       // В плейлистах попадаются подкасты и удалённые позиции — у них нет трека.
-      if (item.track?.id) out.push(toTrackRef(item.track));
+      const track = entry.item ?? entry.track;
+      if (track?.id) out.push(toTrackRef(track));
     }
     return out;
   }

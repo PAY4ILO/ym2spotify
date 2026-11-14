@@ -3,7 +3,7 @@ import { ndjson, requireSpotify, requireYandex, type Emit } from '@/lib/server';
 import { buildSummary, dedupe, emptySummary, matchAll, type Group, type Resolved } from '@/lib/transfer';
 import { saveCache } from '@/lib/store';
 import type { SpotifyClient } from '@/lib/spotify';
-import { addTracksToPlaylist, createPlaylist, getAccount, likeTracks, searchTracks } from '@/lib/yandex';
+import { addTracksToPlaylist, createPlaylist, getAccount, getTracks, likeTracks, normalizeTrack, searchTracks } from '@/lib/yandex';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -114,6 +114,18 @@ async function applyGroups(
       await likeTracks(token, uid, unique.map((t) => t.id));
       emit({ type: 'stage', stage: 'apply', message: `Лайков поставлено: ${unique.length}` });
       continue;
+    }
+
+    // В кэше хранится только ID трека, поэтому запрашиваем ID альбомов у Яндекса.
+    // Делаем это до создания плейлиста, чтобы ошибка запроса не оставила пустую копию.
+    const missingIds = unique.filter((t) => !t.albumId).map((t) => t.id);
+    if (missingIds.length > 0) {
+      emit({ type: 'stage', stage: 'apply', message: `Получаем данные об альбомах для «${group.title}»: ${missingIds.length} треков` });
+      const details = await getTracks(token, missingIds);
+      const albumByTrack = new Map(details.map(normalizeTrack).map((t) => [t.id, t.albumId]));
+      for (const track of unique) {
+        if (!track.albumId) track.albumId = albumByTrack.get(track.id);
+      }
     }
 
     const created = await createPlaylist(token, uid, group.title);
